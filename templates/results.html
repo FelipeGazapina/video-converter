@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+
+{% block title %}Resultados - Conversor de Vídeo{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2><i class="fas fa-folder-open"></i> Arquivos Processados</h2>
+    
+    {% if results %}
+    <p>Encontrados {{ results|length }} arquivo(s) processado(s).</p>
+    
+    <ul class="file-list">
+        {% for result in results %}
+        <li class="file-item">
+            <div class="file-info">
+                <div class="file-name">
+                    <i class="fas fa-{% if result.name.endswith('.mp4') %}video{% else %}music{% endif %}" 
+                       style="color: {% if result.name.endswith('.mp4') %}#667eea{% else %}#e83e8c{% endif %}; margin-right: 8px;"></i>
+                    {{ result.name }}
+                </div>
+                <div class="file-size">
+                    {{ "%.2f"|format(result.size / (1024 * 1024)) }} MB
+                </div>
+            </div>
+            <div class="file-actions">
+                <a href="/download/{{ result.relative_path }}" class="btn btn-success" download>
+                    <i class="fas fa-download"></i> Download
+                </a>
+                <button class="btn btn-secondary" onclick="showFileInfo('{{ result.name }}', {{ result.size }}, '{{ result.relative_path }}')">
+                    <i class="fas fa-info"></i> Info
+                </button>
+            </div>
+        </li>
+        {% endfor %}
+    </ul>
+    
+    <div style="margin-top: 20px;">
+        <a href="/" class="btn">
+            <i class="fas fa-plus"></i> Processar Novo Arquivo
+        </a>
+        <button class="btn btn-danger" onclick="clearAllFiles()">
+            <i class="fas fa-trash"></i> Limpar Todos os Arquivos
+        </button>
+    </div>
+    
+    {% else %}
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle"></i>
+        <strong>Nenhum arquivo processado ainda.</strong>
+        <br>
+        <a href="/" class="btn" style="margin-top: 10px;">
+            <i class="fas fa-upload"></i> Processar Primeiro Arquivo
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<!-- File Info Modal -->
+<div id="fileInfoModal" class="hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; align-items: center; justify-content: center;">
+    <div class="card" style="max-width: 500px; width: 90%; margin: 20px;">
+        <h3><i class="fas fa-info-circle"></i> Informações do Arquivo</h3>
+        <div id="fileInfoContent"></div>
+        <div style="margin-top: 20px; text-align: right;">
+            <button class="btn btn-secondary" onclick="closeFileInfo()">
+                <i class="fas fa-times"></i> Fechar
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Clear Confirmation Modal -->
+<div id="clearModal" class="hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; align-items: center; justify-content: center;">
+    <div class="card" style="max-width: 400px; width: 90%; margin: 20px;">
+        <h3><i class="fas fa-exclamation-triangle"></i> Confirmar Exclusão</h3>
+        <p>Tem certeza que deseja excluir todos os arquivos processados? Esta ação não pode ser desfeita.</p>
+        <div style="margin-top: 20px; text-align: right;">
+            <button class="btn btn-secondary" onclick="closeClearModal()">
+                <i class="fas fa-times"></i> Cancelar
+            </button>
+            <button class="btn btn-danger" onclick="confirmClearAll()">
+                <i class="fas fa-trash"></i> Excluir Tudo
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function showFileInfo(fileName, fileSize, relativePath) {
+    const sizeInMB = (fileSize / (1024 * 1024)).toFixed(2);
+    const sizeInKB = (fileSize / 1024).toFixed(2);
+    const isVideo = fileName.endsWith('.mp4');
+    
+    document.getElementById('fileInfoContent').innerHTML = `
+        <div style="margin-bottom: 15px;">
+            <strong>Nome do arquivo:</strong><br>
+            <code>${fileName}</code>
+        </div>
+        <div style="margin-bottom: 15px;">
+            <strong>Tipo:</strong><br>
+            <i class="fas fa-${isVideo ? 'video' : 'music'}" style="color: ${isVideo ? '#667eea' : '#e83e8c'}; margin-right: 5px;"></i>
+            ${isVideo ? 'Arquivo de Vídeo (MP4)' : 'Arquivo de Áudio (MP3)'}
+        </div>
+        <div style="margin-bottom: 15px;">
+            <strong>Tamanho:</strong><br>
+            ${sizeInMB} MB (${sizeInKB} KB)
+        </div>
+        <div style="margin-bottom: 15px;">
+            <strong>Caminho relativo:</strong><br>
+            <code>${relativePath}</code>
+        </div>
+        <div>
+            <a href="/download/${relativePath}" class="btn btn-success" download>
+                <i class="fas fa-download"></i> Download Direto
+            </a>
+        </div>
+    `;
+    
+    document.getElementById('fileInfoModal').classList.remove('hidden');
+}
+
+function closeFileInfo() {
+    document.getElementById('fileInfoModal').classList.add('hidden');
+}
+
+function clearAllFiles() {
+    document.getElementById('clearModal').classList.remove('hidden');
+}
+
+function closeClearModal() {
+    document.getElementById('clearModal').classList.add('hidden');
+}
+
+function confirmClearAll() {
+    // This would need to be implemented on the server side
+    alert('Funcionalidade de limpeza será implementada em breve.');
+    closeClearModal();
+}
+
+// Close modals when clicking outside
+document.addEventListener('click', function(e) {
+    if (e.target.id === 'fileInfoModal') {
+        closeFileInfo();
+    }
+    if (e.target.id === 'clearModal') {
+        closeClearModal();
+    }
+});
+</script>
+{% endblock %}
